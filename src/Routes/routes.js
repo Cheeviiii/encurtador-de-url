@@ -1,0 +1,52 @@
+const express = require("express");
+const Link = require("../Models/Link");
+
+const router = express.Router();
+
+router.get('/:code/stats', async (req,res, next) => {
+  const code = req.params.code
+
+  const resultado = await Link.findOne({where: {code}})
+  if(!resultado) return res.sendStatus(404)
+
+  res.render('../src/views/stats', resultado.dataValues)
+})
+
+router.get("/:code", async (req, res, next) => {
+  const code = req.params.code;
+
+  const resultado = await Link.findOne({ where: { code } });
+  if (!resultado) return res.sendStatus(404);
+
+  resultado.hits++;
+  await resultado.save();
+
+  res.redirect(resultado.url);
+});
+
+router.get("/", (req, res) => {
+  res.render("../src/views/index");
+});
+
+function generateCode() {
+  let text = "";
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 5; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  return text;
+}
+
+router.post("/new", async (req, res, next) => {
+  const url = req.body.url;
+  const code = generateCode();
+
+  const resultado = await Link.create({
+    url,
+    code,
+  });
+
+  res.render("../src/views/stats", resultado.dataValues);
+});
+
+module.exports = router;
